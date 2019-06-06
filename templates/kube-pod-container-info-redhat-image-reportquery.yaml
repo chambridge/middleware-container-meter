@@ -1,0 +1,34 @@
+---
+apiVersion: metering.openshift.io/v1alpha1
+kind: ReportQuery
+metadata:
+  labels:
+    middleware-container-meter: "true"
+  name: kube-pod-container-info-redhat-image-raw
+spec:
+  columns:
+    - name: pod
+      type: string
+      unit: kubernetes_pod
+    - name: namespace
+      type: string
+      unit: kubernetes_namespace
+    - name: image
+      type: string
+    - name: timestamp
+      type: timestamp
+      unit: date
+    - name: dt
+      type: string
+  inputs:
+    - default: kube-pod-container-info-redhat-image
+      name: KubePodContainerInfoRedHatImageDataSourceName
+      type: ReportDataSource
+  query: |
+    SELECT labels['pod'] as pod,
+        labels['namespace'] as namespace,
+        labels['image'],
+        "timestamp",
+        dt
+    FROM {| dataSourceTableName .Report.Inputs.KubePodContainerInfoRedHatImageDataSourceName |}
+    WHERE element_at(labels, 'pod') IS NOT NULL

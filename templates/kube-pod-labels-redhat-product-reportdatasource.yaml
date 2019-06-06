@@ -1,0 +1,11 @@
+---
+apiVersion: metering.openshift.io/v1alpha1
+kind: ReportDataSource
+metadata:
+  labels:
+    middleware-container-meter: "true"
+  name: kube-pod-labels-com-redhat-product
+spec:
+  prometheusMetricsImporter:
+    query: |
+      kube_pod_labels{label_com_redhat_product=~".+"}

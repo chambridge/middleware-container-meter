@@ -1,0 +1,11 @@
+---
+apiVersion: metering.openshift.io/v1alpha1
+kind: ReportDataSource
+metadata:
+  labels:
+    middleware-container-meter: "true"
+  name: kube-pod-container-info-redhat-image
+spec:
+  prometheusMetricsImporter:
+    query: |
+      kube_pod_container_info{image=~"registry.*redhat.*"}

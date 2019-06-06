@@ -1,0 +1,39 @@
+---
+apiVersion: metering.openshift.io/v1alpha1
+kind: ReportQuery
+metadata:
+  labels:
+    middleware-container-meter: "true"
+  name: middleware-cpu-usage
+spec:
+  columns:
+    - name: pod
+      type: string
+      unit: kubernetes_pod
+    - name: namespace
+      type: string
+      unit: kubernetes_namespace
+    - name: product
+      type: string
+    - name: used_cores
+      type: double
+  inputs:
+    - default: kube-pod-labels-com-redhat-product
+      name: KubePodLabelsComRedHatProductDataSourceName
+      type: ReportDataSource
+    - default: pod-usage-cpu-cores
+      name: PodUsageCpuCoresDataSourceName
+      type: ReportDataSource
+  query: |
+    SELECT
+        C.labels['pod_name'] as pod,
+        C.labels['namespace'] as namespace,
+        L.labels['label_com_redhat_product'] as product,
+        max(C.amount) as used_cores
+    FROM {| dataSourceTableName .Report.Inputs.PodUsageCpuCoresDataSourceName |} as C
+    JOIN {| dataSourceTableName .Report.Inputs.KubePodLabelsComRedHatProductDataSourceName |} as L
+        ON C.labels['pod_name'] = L.labels['pod']
+    WHERE C."timestamp" >= timestamp '{|.Report.StartPeriod | prestoTimestamp |}'
+        AND C."timestamp" <= timestamp '{| .Report.EndPeriod | prestoTimestamp |}'
+    GROUP BY C.labels['namespace'], C.labels['pod_name'], L.labels['label_com_redhat_product']
+    ORDER BY project ASC, used_cores DESC
