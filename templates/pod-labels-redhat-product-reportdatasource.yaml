@@ -1,0 +1,10 @@
+---
+apiVersion: metering.openshift.io/v1alpha1
+kind: ReportDataSource
+metadata:
+  labels:
+    middleware-container-meter: "true"
+  name: pod-labels-com-redhat-product-raw
+spec:
+  reportQueryView:
+    queryName: kube-pod-labels-com-redhat-product-raw

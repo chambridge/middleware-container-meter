@@ -1,0 +1,10 @@
+---
+apiVersion: metering.openshift.io/v1alpha1
+kind: ReportDataSource
+metadata:
+  labels:
+    middleware-container-meter: "true"
+  name: pod-container-info-redhat-image-raw
+spec:
+  reportQueryView:
+    queryName: kube-pod-container-info-redhat-image-raw
