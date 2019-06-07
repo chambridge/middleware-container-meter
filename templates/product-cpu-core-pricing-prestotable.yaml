@@ -1,6 +1,8 @@
 apiVersion: metering.openshift.io/v1alpha1
 kind: PrestoTable
 metadata:
+  labels:
+    middleware-container-meter: "true"
   name: product-cpu-core-pricing
 spec:
   catalog: "hive"
