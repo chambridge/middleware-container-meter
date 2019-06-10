@@ -18,6 +18,10 @@ spec:
     - name: used_cores
       type: double
   inputs:
+    - name: ReportingStart
+      type: time
+    - name: ReportingEnd
+      type: time
     - default: kube-pod-labels-com-redhat-product
       name: KubePodLabelsComRedHatProductDataSourceName
       type: ReportDataSource
@@ -33,7 +37,7 @@ spec:
     FROM {| dataSourceTableName .Report.Inputs.PodUsageCpuCoresDataSourceName |} as C
     JOIN {| dataSourceTableName .Report.Inputs.KubePodLabelsComRedHatProductDataSourceName |} as L
         ON C.labels['pod_name'] = L.labels['pod']
-    WHERE C."timestamp" >= timestamp '{|.Report.StartPeriod | prestoTimestamp |}'
-        AND C."timestamp" <= timestamp '{| .Report.EndPeriod | prestoTimestamp |}'
+    WHERE C."timestamp" >= timestamp '{| default .Report.ReportingStart .Report.Inputs.ReportingStart | prestoTimestamp |}'
+        AND C."timestamp" <= timestamp '{| default .Report.ReportingEnd .Report.Inputs.ReportingEnd | prestoTimestamp |}'
     GROUP BY C.labels['namespace'], C.labels['pod_name'], L.labels['label_com_redhat_product']
-    ORDER BY project ASC, used_cores DESC
+    ORDER BY namespace ASC, used_cores DESC
