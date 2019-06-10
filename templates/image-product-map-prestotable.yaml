@@ -1,0 +1,28 @@
+apiVersion: metering.openshift.io/v1alpha1
+kind: PrestoTable
+metadata:
+  labels:
+    middleware-container-meter: "true"
+  name: image-product-map
+spec:
+  catalog: "hive"
+  schema: "default"
+  tableName: "image_product_map"
+  columns:
+  - name: "image"
+    type: "varchar"
+  - name: "product"
+    type: "varchar"
+  createTableAs: true
+  query: |
+    SELECT * FROM (
+      VALUES ('registry.redhat.io/rhpam-7-tech-preview/rhpam73-operator:1.1', 'rhpam73'),
+             ('registry.access.redhat.com/amq7/amq-streams-cluster-operator:1.1.0', 'amq7'),
+             ('registry.access.redhat.com/amq7/amq-streams-kafka:1.1.0-kafka-2.1.1', 'amq7'),
+             ('registry.access.redhat.com/amq7/amq-streams-kafka-stunnel:1.1.0', 'amq7'),
+             ('registry.access.redhat.com/amq7/amq-streams-zookeeper-stunnel:1.1.0', 'amq7'),
+             ('registry.access.redhat.com/amq7/amq-streams-entity-operator-stunnel:1.1.0', 'amq7'),
+             ('registry.access.redhat.com/amq7/amq-streams-topic-operator:1.1.0', 'amq7'),
+             ('registry.access.redhat.com/amq7/amq-streams-user-operator:1.1.0', 'amq7'),
+             ('registry.access.redhat.com/amq7/amq-streams-zookeeper:1.1.0-kafka-2.1.1', 'amq7')
+    ) AS t (image, product)
