@@ -1,0 +1,11 @@
+---
+apiVersion: metering.openshift.io/v1alpha1
+kind: Report
+metadata:
+  labels:
+    middleware-container-meter: "true"
+  name: middleware-cpu-usage-report
+spec:
+  query: middleware-cpu-usage
+  schedule:
+    period: hourly
