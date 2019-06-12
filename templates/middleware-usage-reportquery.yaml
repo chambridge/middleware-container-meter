@@ -17,6 +17,10 @@ spec:
       type: varchar
     - name: used_cores
       type: double
+    - name: cost_per_hour
+      type: double
+    - name: currency
+      type: varchar
     - name: interval_start
       type: timestamp
       unit: date
@@ -33,6 +37,9 @@ spec:
       type: ReportDataSource
     - default: image-product-map
       name: ImageProductMapDataSourceName
+      type: ReportDataSource
+    - default: product-cpu-core-pricing
+      name: ProductCpuCorePricingDataSourceName
       type: ReportDataSource
     - default: pod-usage-cpu-cores
       name: PodUsageCpuCoresDataSourceName
@@ -83,11 +90,15 @@ spec:
         C.namespace,
         L.product,
         C.used_cores,
+        C.used_cores * D.cost_per_cpu_core_hour as cost_per_hour,
+        D.currency,
         C.interval_start
       FROM cte_hourly_pod_max_cpu_core as C
       JOIN cte_hourly_pod_by_product_label as L
         ON C.pod = L.pod
           AND C.interval_start = L.interval_start
+      JOIN {| dataSourceTableName .Report.Inputs.ProductCpuCorePricingDataSourceName |} as D
+          ON L.product = D.product
     ),
     cte_hourly_pod_max_cpu_core_by_image AS (
       SELECT
@@ -95,6 +106,8 @@ spec:
         C.namespace,
         P.product,
         C.used_cores,
+        C.used_cores * D.cost_per_cpu_core_hour as cost_per_hour,
+        D.currency,
         C.interval_start
       FROM cte_hourly_pod_max_cpu_core as C
       JOIN cte_hourly_pod_by_image as I
@@ -102,12 +115,16 @@ spec:
           AND C.interval_start = I.interval_start
       JOIN {| dataSourceTableName .Report.Inputs.ImageProductMapDataSourceName |} as P
           ON I.image = P.image
+      JOIN {| dataSourceTableName .Report.Inputs.ProductCpuCorePricingDataSourceName |} as D
+          ON P.product = D.product
     )
     SELECT
       pod,
       namespace,
       product,
       used_cores,
+      cost_per_hour,
+      currency,
       interval_start
     FROM cte_hourly_pod_max_cpu_core_by_label
     UNION ALL
@@ -116,5 +133,7 @@ spec:
       namespace,
       product,
       used_cores,
+      cost_per_hour,
+      currency,
       interval_start
     FROM cte_hourly_pod_max_cpu_core_by_image

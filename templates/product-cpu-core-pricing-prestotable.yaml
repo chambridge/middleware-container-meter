@@ -18,6 +18,8 @@ spec:
   createTableAs: true
   query: |
     SELECT * FROM (
-      VALUES ('rhpam73', 0.1149, 'USD'),
-             ('amq7', 0.0928, 'USD')
+      VALUES ('rhpam73', 0.45, 'USD'),
+             ('amq7', 0.39, 'USD'),
+             ('eap', 0.26, 'USD'),
+             ('eap7', 0.26, 'USD')
     ) AS t (product, cost_per_cpu_core_hour, currency)
