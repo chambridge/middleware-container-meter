@@ -96,6 +96,7 @@ spec:
       FROM cte_hourly_pod_max_cpu_core as C
       JOIN cte_hourly_pod_by_product_label as L
         ON C.pod = L.pod
+          AND C.namespace = L.namespace
           AND C.interval_start = L.interval_start
       JOIN {| dataSourceTableName .Report.Inputs.ProductCpuCorePricingDataSourceName |} as D
           ON L.product = D.product
