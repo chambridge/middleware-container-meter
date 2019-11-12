@@ -5,6 +5,7 @@ metadata:
     middleware-container-meter: "true"
   name: product-cpu-core-pricing
 spec:
+  unmanaged: false
   catalog: "hive"
   schema: "default"
   tableName: "product_cpu_core_pricing"
