@@ -5,6 +5,7 @@ metadata:
     middleware-container-meter: "true"
   name: image-product-map
 spec:
+  unmanaged: false
   catalog: "hive"
   schema: "default"
   tableName: "image_product_map"
