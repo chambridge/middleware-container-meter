@@ -8,4 +8,4 @@ metadata:
 spec:
   prometheusMetricsImporter:
     query: |
-      kube_pod_labels{label_com_redhat_product=~".+"}
+      kube_pod_labels{label_com_redhat_product_name=~".+"}

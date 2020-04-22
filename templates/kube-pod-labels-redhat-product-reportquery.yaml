@@ -27,7 +27,7 @@ spec:
   query: |
     SELECT labels['pod'] as pod,
         labels['namespace'] as namespace,
-        labels['label_com_redhat_product'] as product,
+        labels['label_com_redhat_product_name'] as product,
         "timestamp",
         dt
     FROM {| dataSourceTableName .Report.Inputs.KubePodLabelsComRedHatProductDataSourceName |}

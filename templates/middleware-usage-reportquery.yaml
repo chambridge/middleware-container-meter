@@ -17,10 +17,6 @@ spec:
       type: varchar
     - name: used_cores
       type: double
-    - name: cost_per_hour
-      type: double
-    - name: currency
-      type: varchar
     - name: interval_start
       type: timestamp
       unit: date
@@ -32,22 +28,13 @@ spec:
     - default: kube-pod-labels-com-redhat-product
       name: KubePodLabelsComRedHatProductDataSourceName
       type: ReportDataSource
-    - default: kube-pod-container-info-redhat-image
-      name: KubePodContainerInfoRedHatImageDataSourceName
-      type: ReportDataSource
-    - default: image-product-map
-      name: ImageProductMapDataSourceName
-      type: ReportDataSource
-    - default: product-cpu-core-pricing
-      name: ProductCpuCorePricingDataSourceName
-      type: ReportDataSource
     - default: pod-usage-cpu-cores
       name: PodUsageCpuCoresDataSourceName
       type: ReportDataSource
   query: |
     WITH cte_hourly_pod_max_cpu_core AS (
       SELECT
-          C.labels['pod_name'] as pod,
+          C.labels['pod'] as pod,
           C.labels['namespace'] as namespace,
           max(C.amount) as used_cores,
           date_trunc('hour', C."timestamp") as interval_start
@@ -56,33 +43,20 @@ spec:
           AND C."timestamp" <= timestamp '{| default .Report.ReportingEnd .Report.Inputs.ReportingEnd | prestoTimestamp |}'
           AND C.dt >= '{| default .Report.ReportingStart .Report.Inputs.ReportingStart | prometheusMetricPartitionFormat |}'
           AND C.dt <= '{| default .Report.ReportingEnd .Report.Inputs.ReportingEnd | prometheusMetricPartitionFormat |}'
-      GROUP BY C.labels['namespace'], C.labels['pod_name'], date_trunc('hour', C."timestamp")
+      GROUP BY C.labels['namespace'], C.labels['pod'], date_trunc('hour', C."timestamp")
     ),
     cte_hourly_pod_by_product_label AS (
       SELECT
           L.labels['pod'] as pod,
           L.labels['namespace'] as namespace,
-          L.labels['label_com_redhat_product'] as product,
+          L.labels['label_com_redhat_product_name'] as product,
           date_trunc('hour', L."timestamp") as interval_start
       FROM {| dataSourceTableName .Report.Inputs.KubePodLabelsComRedHatProductDataSourceName |} as L
       WHERE L."timestamp" >= timestamp '{| default .Report.ReportingStart .Report.Inputs.ReportingStart | prestoTimestamp |}'
           AND L."timestamp" <= timestamp '{| default .Report.ReportingEnd .Report.Inputs.ReportingEnd | prestoTimestamp |}'
           AND L.dt >= '{| default .Report.ReportingStart .Report.Inputs.ReportingStart | prometheusMetricPartitionFormat |}'
           AND L.dt <= '{| default .Report.ReportingEnd .Report.Inputs.ReportingEnd | prometheusMetricPartitionFormat |}'
-      GROUP BY L.labels['namespace'], L.labels['pod'], L.labels['label_com_redhat_product'], date_trunc('hour', L."timestamp")
-    ),
-    cte_hourly_pod_by_image AS (
-      SELECT
-          P.labels['pod'] as pod,
-          P.labels['namespace'] as namespace,
-          P.labels['image'] as image,
-          date_trunc('hour', P."timestamp") as interval_start
-      FROM {| dataSourceTableName .Report.Inputs.KubePodContainerInfoRedHatImageDataSourceName |} as P
-      WHERE P."timestamp" >= timestamp '{| default .Report.ReportingStart .Report.Inputs.ReportingStart | prestoTimestamp |}'
-          AND P."timestamp" <= timestamp '{| default .Report.ReportingEnd .Report.Inputs.ReportingEnd | prestoTimestamp |}'
-          AND P.dt >= '{| default .Report.ReportingStart .Report.Inputs.ReportingStart | prometheusMetricPartitionFormat |}'
-          AND P.dt <= '{| default .Report.ReportingEnd .Report.Inputs.ReportingEnd | prometheusMetricPartitionFormat |}'
-      GROUP BY P.labels['namespace'], P.labels['pod'], P.labels['image'], date_trunc('hour', P."timestamp")
+      GROUP BY L.labels['namespace'], L.labels['pod'], L.labels['label_com_redhat_product_name'], date_trunc('hour', L."timestamp")
     ),
     cte_hourly_pod_max_cpu_core_by_label AS (
       SELECT
@@ -90,52 +64,17 @@ spec:
         C.namespace,
         L.product,
         C.used_cores,
-        C.used_cores * D.cost_per_cpu_core_hour as cost_per_hour,
-        D.currency,
         C.interval_start
       FROM cte_hourly_pod_max_cpu_core as C
       JOIN cte_hourly_pod_by_product_label as L
         ON C.pod = L.pod
           AND C.namespace = L.namespace
           AND C.interval_start = L.interval_start
-      JOIN {| dataSourceTableName .Report.Inputs.ProductCpuCorePricingDataSourceName |} as D
-          ON L.product = D.product
-    ),
-    cte_hourly_pod_max_cpu_core_by_image AS (
-      SELECT
-        C.pod,
-        C.namespace,
-        P.product,
-        C.used_cores,
-        C.used_cores * D.cost_per_cpu_core_hour as cost_per_hour,
-        D.currency,
-        C.interval_start
-      FROM cte_hourly_pod_max_cpu_core as C
-      JOIN cte_hourly_pod_by_image as I
-        ON C.pod = I.pod
-          AND C.namespace = I.namespace
-          AND C.interval_start = I.interval_start
-      JOIN {| dataSourceTableName .Report.Inputs.ImageProductMapDataSourceName |} as P
-          ON I.image = P.image
-      JOIN {| dataSourceTableName .Report.Inputs.ProductCpuCorePricingDataSourceName |} as D
-          ON P.product = D.product
     )
     SELECT
       pod,
       namespace,
       product,
       used_cores,
-      cost_per_hour,
-      currency,
       interval_start
     FROM cte_hourly_pod_max_cpu_core_by_label
-    UNION ALL
-    SELECT
-      pod,
-      namespace,
-      product,
-      used_cores,
-      cost_per_hour,
-      currency,
-      interval_start
-    FROM cte_hourly_pod_max_cpu_core_by_image
