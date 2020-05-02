@@ -3,8 +3,8 @@ apiVersion: metering.openshift.io/v1alpha1
 kind: ReportDataSource
 metadata:
   labels:
-    middleware-container-meter: "true"
-  name: kube-pod-labels-com-redhat-product
+    subscription-watch: "true"
+  name: sw-pod-labels-product
 spec:
   prometheusMetricsImporter:
     query: |

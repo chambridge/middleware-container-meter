@@ -1,0 +1,11 @@
+---
+apiVersion: metering.openshift.io/v1alpha1
+kind: ReportDataSource
+metadata:
+  labels:
+    subscription-watch: "true"
+  name: sw-pod-labels-product-integrations
+spec:
+  prometheusMetricsImporter:
+    query: |
+      kube_pod_labels{label_com_redhat_product_name=~".+"} AND (kube_pod_labels{label_syndesis_io_type="integration"} OR kube_pod_labels{label_camel_apache_org_integration=~".+"})

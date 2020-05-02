@@ -1,0 +1,11 @@
+---
+apiVersion: metering.openshift.io/v1alpha1
+kind: Report
+metadata:
+  labels:
+    subscription-watch: "true"
+  name: sw-cpu-usage-product-integrations-report
+spec:
+  query: sw-cpu-usage-product-integrations
+  schedule:
+    period: hourly
